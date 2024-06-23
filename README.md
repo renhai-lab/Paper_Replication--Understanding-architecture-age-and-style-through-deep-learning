@@ -1,33 +1,35 @@
 # 论文复现——《通过深度学习来识别建筑年代和风格》
 
-📌建议先阅读[论文解读：如何利用最近很火的深度学习来识别建筑年代和风格？🔗](https://blog.renhai.online/archives/Understanding_architecture_age_and_style_through_deep_learning_part1)以了解论文的大致内容和技术方法
+📌 建议先阅读[论文解读：如何利用最近很火的深度学习来识别建筑年代和风格？🔗](https://blog.renhai.online/archives/understanding-architecture-age-and-style-through-deep-learning-part1)以了解论文的大致内容和技术方法
 
-📌所有文章均可在[我的博客](https://blog.renhai.online)和[微信公众号（renhai-lab）](assets/qrcode_for_gh_c0d228771707_258.jpg)中找到，欢迎关注！
+📌 所有文章均可在[我的博客](https://blog.renhai.online)和[微信公众号（renhai-lab）](https://image-1315363329.cos.ap-shanghai.myqcloud.com/lessons/qrcode_for_gh_c0d228771707_258.jpg)中找到，欢迎关注！
 
-📌 收录进微信公众号专栏：[【SCI论文复现】《通过深度学习了解建筑年代和风格》](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzkwNjQyNjA4OQ==&action=getalbum&album_id=3161638624223559681#wechat_redirect)
+📌 收录进微信公众号专栏：[【SCI 论文复现】《通过深度学习了解建筑年代和风格》](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzkwNjQyNjA4OQ==&action=getalbum&album_id=3161638624223559681#wechat_redirect)
 
-> 《通过深度学习了解建筑年代和风格》论文复现代码已上传到[Github](https://github.com/renhai-lab/Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning)和[Gitee](https://gitee.com/renhai-lab/Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning)，但Gitee仅用于同步，目前文章和仓库还在更新中，请访问对应的主页查看。
+《通过深度学习了解建筑年代和风格》论文复现代码已上传到[Github](https://github.com/renhai-lab/Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning)和[Gitee](https://gitee.com/renhai-lab/Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning)，但 Gitee 仅用于同步，目前文章和仓库还在更新中，请访问对应的主页查看。
 
 ## 一、文章目录
 
-| 状态 | 文章标题                                                     | 博客                                                         | 微信文章                                                     |
-| ---- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| 🟠    | Part1.论文解读：如何利用最近很火的深度学习来识别建筑年代和风格？ | [博客🔗](https://blog.renhai.online/archives/Understanding_architecture_age_and_style_through_deep_learning_part1) | [微信🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247486261&idx=1&sn=0e65b3228c35b57cf5de17defd175df5&chksm=c0e9e8b3f79e61a58d74ac409e31f3b64706eceefd4b439499287ef1657ea1f372867e6871e0#rd) |
-| 🟠    | Part2.下载和预处理建筑足迹数据集                             | [博客🔗](https://blog.renhai.online/archives/Understanding_architecture_age_and_style_through_deep_learning_part2) | [微信🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247486308&idx=1&sn=954169acd58d01a22bcfc7c3d28fbfd7&chksm=c0e9e8e2f79e61f4db91e63954fc13cff5aae6fd9dff720b5d7f6587413a92eedac19ff11d02#rd) |
-| 🟠    | Part3-1.获取高质量的阿姆斯特丹建筑立面图像                   | [博客🔗](https://blog.renhai.online/archives/Understanding_architecture_age_and_style_through_deep_learning_part3-1) | [微信🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247486379&idx=1&sn=ba562c4597fbe35d060da00a6732a8fd&chksm=c0e9e82df79e613b27bd20cb99a5b7d57f2c96739b6a5a9aed1f378d07311dc0afa6a88a7431#rd) |
-| 🟠    | Part3-2.获取高质量的阿姆斯特丹建筑立面图像                   | [博客🔗](https://blog.renhai.online/archives/Understanding_architecture_age_and_style_through_deep_learning_part3-2) | [微信🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247487438&idx=1&sn=46584f8aae5cce92d63cdc12df574a20&chksm=c0e9ec48f79e655e90f8704bdd99f6d39fe0778f02f50b860a303d09f6a32017a4fe47bc6895#rd) |
-| 🟠    | Part4-1.对建筑年代进行深度学习训练和预测                     | [博客🔗](https://blog.renhai.online/archives/Understanding_architecture_age_and_style_through_deep_learning_part4-1) | [微信🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247487284&idx=1&sn=46e152ea7f69d51d76b10dfe6e5d577e&chksm=c0e9ecb2f79e65a4fe4db6d316d45a730c483a54ba5b641eb69cd8395146d113e19805b0fa90#rd) |
-| 🟠    | Part4-2.对建筑年代预测结果进行展示和分析                     | [博客🔗](https://blog.renhai.online/archives/Understanding_architecture_age_and_style_through_deep_learning_part4-2) | [微信🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247487319&idx=1&sn=6567c74123e57cd7ab4a88a8f3b6683d&chksm=c0e9ecd1f79e65c7e3671de13e86f4d7d37e8c027662961c1d93f5963d3abc964d9c78740ad1#rd) |
-| 😑    | 练习：Part5.对建筑风格进行深度学习训练和预测以及分析         |                                                              |                                                              |
+| 状态  | 文章标题                                | 博客                                                                                                                  | 微信文章                                                                                                                                                                                                      |
+| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✅   | Part1.论文解读：如何利用最近很火的深度学习来识别建筑年代和风格？ | [博客 🔗](https://blog.renhai.online/archives/understanding-architecture-age-and-style-through-deep-learning-part1)   | [微信 🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247486261&idx=1&sn=0e65b3228c35b57cf5de17defd175df5&chksm=c0e9e8b3f79e61a58d74ac409e31f3b64706eceefd4b439499287ef1657ea1f372867e6871e0#rd) |
+| ✅   | Part2.下载和预处理建筑足迹数据集                 | [博客 🔗](https://blog.renhai.online/archives/understanding-architecture-age-and-style-through-deep-learning-part2)   | [微信 🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247486308&idx=1&sn=954169acd58d01a22bcfc7c3d28fbfd7&chksm=c0e9e8e2f79e61f4db91e63954fc13cff5aae6fd9dff720b5d7f6587413a92eedac19ff11d02#rd) |
+| ✅   | Part3-1.获取高质量的阿姆斯特丹建筑立面图像           | [博客 🔗](https://blog.renhai.online/archives/understanding-architecture-age-and-style-through-deep-learning-part3-1) | [微信 🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247486379&idx=1&sn=ba562c4597fbe35d060da00a6732a8fd&chksm=c0e9e82df79e613b27bd20cb99a5b7d57f2c96739b6a5a9aed1f378d07311dc0afa6a88a7431#rd) |
+| ✅   | Part3-2.获取高质量的阿姆斯特丹建筑立面图像           | [博客 🔗](https://blog.renhai.online/archives/understanding-architecture-age-and-style-through-deep-learning-part3-2) | [微信 🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247487438&idx=1&sn=46584f8aae5cce92d63cdc12df574a20&chksm=c0e9ec48f79e655e90f8704bdd99f6d39fe0778f02f50b860a303d09f6a32017a4fe47bc6895#rd) |
+| ✅   | Part4-1.对建筑年代进行深度学习训练和预测            | [博客 🔗](https://blog.renhai.online/archives/understanding-architecture-age-and-style-through-deep-learning-part4-1) | [微信 🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247487284&idx=1&sn=46e152ea7f69d51d76b10dfe6e5d577e&chksm=c0e9ecb2f79e65a4fe4db6d316d45a730c483a54ba5b641eb69cd8395146d113e19805b0fa90#rd) |
+| ✅   | Part4-2.对建筑年代预测结果进行展示和分析            | [博客 🔗](https://blog.renhai.online/archives/understanding-architecture-age-and-style-through-deep-learning-part4-2) | [微信 🔗](https://mp.weixin.qq.com/s?__biz=MzkwNjQyNjA4OQ==&mid=2247487319&idx=1&sn=6567c74123e57cd7ab4a88a8f3b6683d&chksm=c0e9ecd1f79e65c7e3671de13e86f4d7d37e8c027662961c1d93f5963d3abc964d9c78740ad1#rd) |
+|     | 练习：Part5.对建筑风格进行深度学习训练和预测以及分析       |                                                                                                                     |                                                                                                                                                                                                           |
 
 ## 二、使用说明
 
-**fork 本仓库，然后克隆到本地或者用云端编辑器打开，最后安装环境。**
+**fork 本仓库(点击下图)，然后克隆到本地或者用云端编辑器打开，最后安装环境。**
+
+[![Readme Card](https://gitstatus.renhai.online/api/pin/?username=renhai-lab&repo=Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning)](https://github.com/renhai-lab/Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning)
 
 ## 三、环境配置说明
 
-1. 直接安装Python、或者使用Anaconda、Pycharm、VScode安装。
-2. pytorch推荐单独安装，详见[PyTorch环境配置](https://blog.renhai.online/archives/DL-01-pytorch#2.PyTorch%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE)。
+1. 直接安装 Python、或者使用 Anaconda、Pycharm、VScode 安装。
+2. pytorch 推荐单独安装，详见[PyTorch 环境配置](https://blog.renhai.online/archives/DL-01-pytorch#2.PyTorch%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE)。
 3. 其余依赖使用`pip install requirements.txt`。
 
 ## 四、部分成果
