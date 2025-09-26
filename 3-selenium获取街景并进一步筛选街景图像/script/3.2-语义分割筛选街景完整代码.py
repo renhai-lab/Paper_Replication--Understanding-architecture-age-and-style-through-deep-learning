@@ -5,30 +5,41 @@
 筛选出包含建筑物facade的高质量图像。
 """
 
-import shutil
-import time
-import os
 import csv
 import glob
-from pypushdeer import PushDeer
-import PIL.Image
+import os
+import shutil
+import time
+
 import numpy as np
+import PIL.Image
 import scipy.io
 import torch
 import torchvision.transforms as transforms
 from mit_semseg.models import ModelBuilder, SegmentationModule
+from pypushdeer import PushDeer
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+# 常量定义
+DEFAULT_IMAGE_PATH = r'../data/GSV/default_image.png'
+BUILDING_INDEX = 1
+BUILDING_RATIO_THRESHOLD = 0.4
+BATCH_SIZE = 12
+NUM_WORKERS = 12
+START_BATCH_NUM = 2200
+NOTIFICATION_INTERVAL = 200
+MAX_RETRIES = 5
+RETRY_DELAY = 5
 
-def load_seg_model(seg_repo_dir):
-    """
-    加载语义分割模型。
+
+def load_segmentation_model(seg_repo_dir):
+    """加载语义分割模型。
     
-    参数：
+    Args:
         seg_repo_dir (str): 语义分割仓库目录路径
         
-    返回：
+    Returns:
         tuple: (分割模块, 颜色映射, 类别名称映射)
     """
     # 加载颜色映射表
@@ -63,27 +74,34 @@ def load_seg_model(seg_repo_dir):
     segmentation_module.cuda()
     return segmentation_module, colors, names
 
-def safe_delete(file_path):
-    """
-    安全删除文件，支持重试机制。
+
+def safe_delete_file(file_path):
+    """安全删除文件，支持重试机制。
     
-    参数：
+    Args:
         file_path (str): 要删除的文件路径
     """
-    # 最多尝试5次
-    for _ in range(5):
+    # 最多尝试指定次数
+    for attempt in range(MAX_RETRIES):
         try:
             os.remove(file_path)
             break
         except PermissionError:
-            print(f"删除文件 {file_path} 时权限被拒绝。正在重试...")
-            time.sleep(5)  # 稍等一会儿再重试
+            print(f"删除文件 {file_path} 时权限被拒绝。正在重试... (尝试 {attempt + 1}/{MAX_RETRIES})")
+            time.sleep(RETRY_DELAY)
         except Exception as e:
             print(f"无法删除文件 {file_path}: {e}")
             break
 # 定义数据集类
 class ImageDataset(Dataset):
+    """图像数据集类，用于加载和预处理街景图像。"""
+    
     def __init__(self, file_paths):
+        """初始化图像数据集。
+        
+        Args:
+            file_paths (list): 图像文件路径列表
+        """
         self.file_paths = file_paths
         self.transform = transforms.Compose([
             transforms.ToTensor(),
@@ -91,34 +109,50 @@ class ImageDataset(Dataset):
         ])
 
     def __len__(self):
+        """返回数据集大小。"""
         return len(self.file_paths)
 
     def __getitem__(self, idx):
-        default_image = r'../data/GSV/default_image.png'  # 指定一个默认图像或默认图像的路径，以便在发生错误时返回
+        """获取指定索引的数据项。
+        
+        Args:
+            idx (int): 数据索引
+            
+        Returns:
+            tuple: (图像数据, 文件路径)
+        """
         try:
             pil_image = PIL.Image.open(self.file_paths[idx]).convert('RGB')
             img_data = self.transform(pil_image)
         except Exception as e:
             print(f"Error processing file {self.file_paths[idx]}: {e}")
             # 删除损坏的图像
-            safe_delete(self.file_paths[idx])
+            safe_delete_file(self.file_paths[idx])
 
             # 如果发生错误，返回默认图像
-            pil_image = PIL.Image.open(default_image).convert('RGB')  # 加载默认图像
+            pil_image = PIL.Image.open(DEFAULT_IMAGE_PATH).convert('RGB')
             img_data = self.transform(pil_image)
+            
         return img_data, self.file_paths[idx]
 
 
 
-def process_pred(pred):
-    """对预测结果进行处理（计算各类别比率并排序）"""
+def process_prediction(pred):
+    """对预测结果进行处理（计算各类别比率并排序）。
+    
+    Args:
+        pred (numpy.ndarray): 分割预测结果
+        
+    Returns:
+        tuple: (类别像素数, 排序后的类别索引)
+    """
     # 计算每个类别的像素数，并获取从多到少的排序
     class_counts = np.bincount(pred.flatten())
     sorted_classes = class_counts.argsort()[::-1]
-    return class_counts, sorted_classes  # 返回类别像素数和排序后的类别
+    return class_counts, sorted_classes
 
 
-def judge_pred(pred, building_index):
+def judge_prediction(pred, building_index=BUILDING_INDEX):
     """
     根据给定的分割预测结果，判断“建筑物”类别是否是图像中的主导类别，
     并且其比例是否超过40%。
@@ -131,7 +165,7 @@ def judge_pred(pred, building_index):
         bool: 如果“建筑物”是主导类别并且其比例超过40%，则返回True，否则返回False。
     """
     # 处理预测结果
-    class_counts, sorted_classes = process_pred(pred)
+    class_counts, sorted_classes = process_prediction(pred)
 
     # 判断
     # 检查“建筑物”是否是最常见的类别
@@ -157,10 +191,13 @@ def judge_pred(pred, building_index):
         return False
 
 
-def mkdir(path):
-    """创建文件夹"""
-    os.makedirs(path, exist_ok=True)  # exist_ok=True表示如果文件夹已经存在，就不要再创建了
-    # print(f"创建文件夹{path}成功")
+def create_directory(path):
+    """创建文件夹。
+    
+    Args:
+        path (str): 文件夹路径
+    """
+    os.makedirs(path, exist_ok=True)
 
 
 if __name__ == '__main__':
@@ -199,11 +236,11 @@ if __name__ == '__main__':
 
     # 创建所有必要的文件夹
     for folder in folders:
-        mkdir(folder)
+        create_directory(folder)
 
     # 加载语义分割模型
     print("正在加载语义分割模型...")
-    segmentation_module, colors, names = load_seg_model(seg_repo_dir)
+    segmentation_module, colors, names = load_segmentation_model(seg_repo_dir)
 
     # 创建图像数据集
     # 获取所有PNG文件的路径
@@ -214,10 +251,7 @@ if __name__ == '__main__':
     print(f"数据集大小: {len(dataset)}")
 
     # 创建数据加载器
-    dataloader = DataLoader(dataset, batch_size=12, shuffle=False, num_workers=12)
-
-    # 设置开始处理的批次号（用于断点续传）
-    start_batch_num = 2200
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS)
 
     # 初始化推送通知（可选）
     try:
@@ -227,14 +261,14 @@ if __name__ == '__main__':
         pushdeer = None
 
     # 创建进度条
-    pbar = tqdm(total=len(dataloader) - start_batch_num, 
+    pbar = tqdm(total=len(dataloader) - START_BATCH_NUM, 
                desc="处理图像批次", ncols=100)
 
     # 开始语义分割和筛选过程
     with torch.inference_mode():
         for current_batch_num, (img_data, file_paths_batch) in enumerate(dataloader, start=1):
             # 跳过指定批次之前的数据（用于断点续传）
-            if current_batch_num < start_batch_num:
+            if current_batch_num < START_BATCH_NUM:
                 continue
 
             # 记录当前批次的合格率
@@ -248,8 +282,8 @@ if __name__ == '__main__':
 
             # 处理批次中的每张图像
             for idx, single_pred in enumerate(pred):
-                # 判断图片是否合格（建筑物占比是否超过40%）
-                if judge_pred(single_pred, building_index=1):
+                # 判断图片是否合格（建筑物占比是否超过阈值）
+                if judge_prediction(single_pred):
                     qualified_rate.append(1)  # 合格
                 else:
                     # 将不合格的图片移动到指定文件夹
@@ -269,7 +303,7 @@ if __name__ == '__main__':
             print(f"批次 {current_batch_num} 合格率: {qualified_rate.mean():.2%}")
 
             # 定期发送进度通知
-            if pushdeer and current_batch_num % 200 == 0:
+            if pushdeer and current_batch_num % NOTIFICATION_INTERVAL == 0:
                 try:
                     pushdeer.send_text(f"持续筛选街景图片中", desp=f"已处理批次: {current_batch_num}")
                 except Exception as e:
