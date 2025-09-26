@@ -1,13 +1,14 @@
-# use conda install:
+# 使用conda安装（推荐）:
 torch~=2.0.1
 torchvision~=0.15.2
-tensorboard～=2.15.0
+tensorboard~=2.15.0
 scikit-learn # conda install -c conda-forge scikit-learn
 jupyter  # conda install jupyter
-seaborn～=0.13.0
+seaborn~=0.13.0
 pandas~=2.0.3
 numpy~=1.25.2
-# use pip install:
+
+# 使用pip安装:
 geopandas~=0.12.0
 pyogrio
 shapely~=2.0.1
@@ -23,11 +24,15 @@ fake_useragent
 webdriver_manager~=4.0.1
 pillow~=9.4.0
 
-# 可选：
+# 可选依赖（用于高级功能）:
 pymongo~=4.5.0
 torchcam~=0.4.0
 mlxtend~=0.22.0
+
+# 语义分割模型（需要手动安装）:
 # git+https://github.com/CSAILVision/semantic-segmentation-pytorch.git@master
+
+# 空间分析（如需要）:
 # pysal~=2.0.0
 # palettable~=3.3.0
 

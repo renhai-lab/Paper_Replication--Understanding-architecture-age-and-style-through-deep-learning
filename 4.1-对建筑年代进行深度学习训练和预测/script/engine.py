@@ -1,3 +1,10 @@
+"""
+PyTorch模型训练和测试引擎
+
+包含用于训练和测试PyTorch深度学习模型的核心函数，
+支持TensorBoard日志记录、模型检查点保存和学习率调度。
+"""
+
 import copy
 import os
 from typing import Dict, List, Tuple
@@ -5,32 +12,33 @@ from torch.utils.tensorboard import SummaryWriter
 import torch
 from tqdm.auto import tqdm
 
+
 def train_step(model: torch.nn.Module,
                dataloader: torch.utils.data.DataLoader,
                loss_fn: torch.nn.Module,
                optimizer: torch.optim.Optimizer,
                device: torch.device) -> Tuple[float, float]:
-    """对PyTorch模型进行单个epoch的训练。
+    """
+    对PyTorch模型进行单个epoch的训练。
 
-    将目标PyTorch模型设置为训练模式，然后执行所有必要的训练步骤（前向传播、损失计算、优化器步骤）。
+    将目标PyTorch模型设置为训练模式，然后执行所有必要的训练步骤
+    （前向传播、损失计算、反向传播、优化器步骤）。
 
     参数：
-    model：要训练的PyTorch模型。
-    dataloader：用于训练模型的DataLoader实例。
-    loss_fn：要最小化的PyTorch损失函数。
-    optimizer：帮助最小化损失函数的PyTorch优化器。
-    device：计算设备（例如："cuda"或"cpu"）。
+        model (torch.nn.Module): 要训练的PyTorch模型
+        dataloader (torch.utils.data.DataLoader): 用于训练模型的数据加载器
+        loss_fn (torch.nn.Module): 要最小化的PyTorch损失函数
+        optimizer (torch.optim.Optimizer): 用于最小化损失函数的优化器
+        device (torch.device): 计算设备，例如"cuda"或"cpu"
 
-    返回：
-    训练损失和训练准确率的元组。
-    格式为（train_loss，train_accuracy）。例如：
-
-    (0.1112，0.8743)
+    返回:
+        Tuple[float, float]: 训练损失和训练准确率的元组
+        格式为(train_loss, train_accuracy)，例如(0.1112, 0.8743)
     """
     # 将模型设置为训练模式
     model.train()
 
-    # 设置训练损失和训练准确率的初始值
+    # 初始化训练损失和准确率累加器
     train_loss, train_acc = 0, 0
 
     # 遍历数据加载器中的数据批次
