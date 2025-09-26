@@ -3,31 +3,27 @@
 
 如果一个函数被定义一次并且可以重复使用，它将放在这里。
 """
-import torch
-import matplotlib.pyplot as plt
-import numpy as np
-
-from torch import nn
 
 import os
 import zipfile
-
 from pathlib import Path
+from typing import List
 
+import matplotlib.pyplot as plt
+import numpy as np
 import requests
+import torch
+import torchvision
+from torch import nn
 
-# 遍历图像分类目录并找出每个子目录中有多少文件（图像）
-import os
-
-def walk_through_dir(dir_path):
-    """
-    遍历目录并返回其内容的详细信息。
+def walk_through_directory(dir_path):
+    """遍历目录并返回其内容的详细信息。
     
-    参数：
+    Args:
         dir_path (str): 目标目录路径
     
-    返回：
-        打印输出以下信息：
+    Returns:
+        None: 打印输出以下信息：
             - dir_path中子目录的数量
             - 每个子目录中图像（文件）的数量
             - 每个子目录的名称
@@ -77,14 +73,10 @@ def plot_decision_boundary(model: torch.nn.Module, X: torch.Tensor, y: torch.Ten
     plt.ylim(yy.min(), yy.max())
 
 
-# 绘制线性数据或训练和测试数据以及预测结果（可选）
-def plot_predictions(
-    train_data, train_labels, test_data, test_labels, predictions=None
-):
-    """
-    绘制线性训练数据和测试数据并比较预测结果。
+def plot_linear_predictions(train_data, train_labels, test_data, test_labels, predictions=None):
+    """绘制线性训练数据和测试数据并比较预测结果。
     
-    参数：
+    Args:
         train_data: 训练数据
         train_labels: 训练标签
         test_data: 测试数据  
@@ -108,32 +100,30 @@ def plot_predictions(
 
 
 # 计算准确率（分类指标）
-def accuracy_fn(y_true, y_pred):
-    """
-    计算真实标签和预测结果之间的准确率。
+def calculate_accuracy(y_true, y_pred):
+    """计算真实标签和预测结果之间的准确率。
 
-    参数：
+    Args:
         y_true (torch.Tensor): 预测的真实标签
         y_pred (torch.Tensor): 要与真实标签比较的预测结果
 
-    返回：
-        torch.float: y_true和y_pred之间的准确率值，例如78.45
+    Returns:
+        float: y_true和y_pred之间的准确率值，例如78.45
     """
     correct = torch.eq(y_true, y_pred).sum().item()
     acc = (correct / len(y_pred)) * 100
     return acc
 
 
-def print_train_time(start, end, device=None):
-    """
-    打印开始时间和结束时间之间的差值。
+def print_training_time(start, end, device=None):
+    """打印开始时间和结束时间之间的差值。
 
-    参数：
+    Args:
         start (float): 计算的开始时间（建议使用timeit格式）
         end (float): 计算的结束时间
         device (str, optional): 运行计算的设备。默认为None
 
-    返回：
+    Returns:
         float: 开始和结束之间的时间（以秒为单位，数值越大表示时间越长）
     """
     total_time = end - start
@@ -186,29 +176,28 @@ from typing import List
 import torchvision
 
 
-def pred_and_plot_image(
+def predict_and_plot_image(
     model: torch.nn.Module,
     image_path: str,
     class_names: List[str] = None,
     transform=None,
     device: torch.device = "cuda" if torch.cuda.is_available() else "cpu",
 ):
-    """
-    使用训练好的模型对目标图像进行预测并绘制图像。
+    """使用训练好的模型对目标图像进行预测并绘制图像。
 
-    参数：
+    Args:
         model (torch.nn.Module): 训练好的PyTorch图像分类模型
         image_path (str): 目标图像的文件路径
         class_names (List[str], optional): 目标图像的不同类别名称。默认为None
-        transform (_type_, optional): 目标图像的变换。默认为None
+        transform: 目标图像的变换。默认为None
         device (torch.device, optional): 用于计算的目标设备。
                                        默认为"cuda"（如果torch.cuda.is_available()）否则为"cpu"
     
-    返回：
-        目标图像的Matplotlib图和以模型预测为标题的图像。
+    Returns:
+        None: 显示目标图像的Matplotlib图和以模型预测为标题的图像。
 
-    使用示例：
-        pred_and_plot_image(model=model,
+    Example:
+        predict_and_plot_image(model=model,
                             image="some_image.jpeg",
                             class_names=["类别_1", "类别_2", "类别_3"],
                             transform=torchvision.transforms.ToTensor(),
@@ -254,11 +243,10 @@ def pred_and_plot_image(
     plt.title(title)
     plt.axis(False)
 
-def set_seeds(seed: int=42):
-    """
-    为torch操作设置随机种子。
+def set_random_seeds(seed: int = 42):
+    """为torch操作设置随机种子。
 
-    参数：
+    Args:
         seed (int, optional): 要设置的随机种子。默认为42
     """
     # 为一般torch操作设置种子
