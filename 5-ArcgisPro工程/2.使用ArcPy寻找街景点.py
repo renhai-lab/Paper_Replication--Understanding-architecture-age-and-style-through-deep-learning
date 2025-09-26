@@ -1,3 +1,10 @@
+"""
+使用ArcPy寻找街景点
+
+该脚本使用ArcGIS Python API处理建筑物多边形数据，
+找到最近的道路点并计算相应的角度信息。
+"""
+
 import time
 import uuid
 
@@ -6,10 +13,13 @@ import pandas as pd
 
 
 def transform_angle(original_angle):
-    """
-    将角度从一个坐标系转换为另一个，并更改方向表示。
-    :param original_angle: 初始的角度（基于东为0°的系统）
-    :return: 转换后的角度（基于北为0°的系统）
+    """将角度从一个坐标系转换为另一个，并更改方向表示。
+    
+    Args:
+        original_angle (float): 初始的角度（基于东为0°的系统）
+        
+    Returns:
+        float: 转换后的角度（基于北为0°的系统）
     """
     # 从建筑物到街道的角度需要将角度旋转180度以“反转”方向
     print("original_angle:", original_angle)
@@ -30,10 +40,28 @@ def transform_angle(original_angle):
     return north_based_angle
 
 def field_exists(feature_class, field_name):
+    """检查要素类中是否存在指定字段。
+    
+    Args:
+        feature_class: 要素类
+        field_name (str): 字段名称
+        
+    Returns:
+        bool: 如果字段存在返回True，否则返回False
+    """
     return field_name in [f.name for f in arcpy.ListFields(feature_class)]
 
 
 def get_midpoint(start_point, end_point):
+    """计算两点之间的中点。
+    
+    Args:
+        start_point: 起始点
+        end_point: 终点
+        
+    Returns:
+        arcpy.Point or None: 中点坐标，如果输入无效则返回None
+    """
     if not start_point or not end_point:
         return None
     mid_x = (start_point.X + end_point.X) / 2
