@@ -1,7 +1,7 @@
 """
-A series of helper functions used throughout the course.
+贯穿整个项目使用的一系列辅助函数集合。
 
-If a function gets defined once and could be used over and over, it'll go in here.
+如果一个函数被定义一次并且可以重复使用，它将放在这里。
 """
 import torch
 import matplotlib.pyplot as plt
@@ -16,54 +16,60 @@ from pathlib import Path
 
 import requests
 
-# Walk through an image classification directory and find out how many files (images)
-# are in each subdirectory.
+# 遍历图像分类目录并找出每个子目录中有多少文件（图像）
 import os
 
 def walk_through_dir(dir_path):
     """
-    Walks through dir_path returning its contents.
-    Args:
-    dir_path (str): target directory
-
-    Returns:
-    A print out of:
-      number of subdiretories in dir_path
-      number of images (files) in each subdirectory
-      name of each subdirectory
+    遍历目录并返回其内容的详细信息。
+    
+    参数：
+        dir_path (str): 目标目录路径
+    
+    返回：
+        打印输出以下信息：
+            - dir_path中子目录的数量
+            - 每个子目录中图像（文件）的数量
+            - 每个子目录的名称
     """
     for dirpath, dirnames, filenames in os.walk(dir_path):
-        print(f"There are {len(dirnames)} directories and {len(filenames)} images in '{dirpath}'.")
+        print(f"在目录 '{dirpath}' 中有 {len(dirnames)} 个子目录和 {len(filenames)} 个图像。")
 
 def plot_decision_boundary(model: torch.nn.Module, X: torch.Tensor, y: torch.Tensor):
-    """Plots decision boundaries of model predicting on X in comparison to y.
-
-    Source - https://madewithml.com/courses/foundations/neural-networks/ (with modifications)
     """
-    # Put everything to CPU (works better with NumPy + Matplotlib)
+    绘制模型在X上预测结果与y的对比决策边界。
+
+    来源 - https://madewithml.com/courses/foundations/neural-networks/ (有修改)
+    
+    参数：
+        model (torch.nn.Module): 训练好的PyTorch模型
+        X (torch.Tensor): 输入特征数据 
+        y (torch.Tensor): 真实标签数据
+    """
+    # 将所有内容放到CPU上（与NumPy + Matplotlib配合更好）
     model.to("cpu")
     X, y = X.to("cpu"), y.to("cpu")
 
-    # Setup prediction boundaries and grid
+    # 设置预测边界和网格
     x_min, x_max = X[:, 0].min() - 0.1, X[:, 0].max() + 0.1
     y_min, y_max = X[:, 1].min() - 0.1, X[:, 1].max() + 0.1
     xx, yy = np.meshgrid(np.linspace(x_min, x_max, 101), np.linspace(y_min, y_max, 101))
 
-    # Make features
+    # 创建特征
     X_to_pred_on = torch.from_numpy(np.column_stack((xx.ravel(), yy.ravel()))).float()
 
-    # Make predictions
+    # 进行预测
     model.eval()
     with torch.inference_mode():
         y_logits = model(X_to_pred_on)
 
-    # Test for multi-class or binary and adjust logits to prediction labels
+    # 测试是否为多类别或二分类，并将logits调整为预测标签
     if len(torch.unique(y)) > 2:
-        y_pred = torch.softmax(y_logits, dim=1).argmax(dim=1)  # mutli-class
+        y_pred = torch.softmax(y_logits, dim=1).argmax(dim=1)  # 多类别分类
     else:
-        y_pred = torch.round(torch.sigmoid(y_logits))  # binary
+        y_pred = torch.round(torch.sigmoid(y_logits))  # 二分类
 
-    # Reshape preds and plot
+    # 重塑预测结果并绘图
     y_pred = y_pred.reshape(xx.shape).detach().numpy()
     plt.contourf(xx, yy, y_pred, cmap=plt.cm.RdYlBu, alpha=0.7)
     plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.RdYlBu)
@@ -71,39 +77,47 @@ def plot_decision_boundary(model: torch.nn.Module, X: torch.Tensor, y: torch.Ten
     plt.ylim(yy.min(), yy.max())
 
 
-# Plot linear data or training and test and predictions (optional)
+# 绘制线性数据或训练和测试数据以及预测结果（可选）
 def plot_predictions(
     train_data, train_labels, test_data, test_labels, predictions=None
 ):
     """
-  Plots linear training data and test data and compares predictions.
-  """
+    绘制线性训练数据和测试数据并比较预测结果。
+    
+    参数：
+        train_data: 训练数据
+        train_labels: 训练标签
+        test_data: 测试数据  
+        test_labels: 测试标签
+        predictions: 可选的预测结果
+    """
     plt.figure(figsize=(10, 7))
 
-    # Plot training data in blue
-    plt.scatter(train_data, train_labels, c="b", s=4, label="Training data")
+    # 用蓝色绘制训练数据
+    plt.scatter(train_data, train_labels, c="b", s=4, label="训练数据")
 
-    # Plot test data in green
-    plt.scatter(test_data, test_labels, c="g", s=4, label="Testing data")
+    # 用绿色绘制测试数据
+    plt.scatter(test_data, test_labels, c="g", s=4, label="测试数据")
 
     if predictions is not None:
-        # Plot the predictions in red (predictions were made on the test data)
-        plt.scatter(test_data, predictions, c="r", s=4, label="Predictions")
+        # 用红色绘制预测结果（预测是在测试数据上进行的）
+        plt.scatter(test_data, predictions, c="r", s=4, label="预测结果")
 
-    # Show the legend
+    # 显示图例
     plt.legend(prop={"size": 14})
 
 
-# Calculate accuracy (a classification metric)
+# 计算准确率（分类指标）
 def accuracy_fn(y_true, y_pred):
-    """Calculates accuracy between truth labels and predictions.
+    """
+    计算真实标签和预测结果之间的准确率。
 
-    Args:
-        y_true (torch.Tensor): Truth labels for predictions.
-        y_pred (torch.Tensor): Predictions to be compared to predictions.
+    参数：
+        y_true (torch.Tensor): 预测的真实标签
+        y_pred (torch.Tensor): 要与真实标签比较的预测结果
 
-    Returns:
-        [torch.float]: Accuracy value between y_true and y_pred, e.g. 78.45
+    返回：
+        torch.float: y_true和y_pred之间的准确率值，例如78.45
     """
     correct = torch.eq(y_true, y_pred).sum().item()
     acc = (correct / len(y_pred)) * 100
@@ -111,27 +125,29 @@ def accuracy_fn(y_true, y_pred):
 
 
 def print_train_time(start, end, device=None):
-    """Prints difference between start and end time.
+    """
+    打印开始时间和结束时间之间的差值。
 
-    Args:
-        start (float): Start time of computation (preferred in timeit format). 
-        end (float): End time of computation.
-        device ([type], optional): Device that compute is running on. Defaults to None.
+    参数：
+        start (float): 计算的开始时间（建议使用timeit格式）
+        end (float): 计算的结束时间
+        device (str, optional): 运行计算的设备。默认为None
 
-    Returns:
-        float: time between start and end in seconds (higher is longer).
+    返回：
+        float: 开始和结束之间的时间（以秒为单位，数值越大表示时间越长）
     """
     total_time = end - start
-    print(f"\nTrain time on {device}: {total_time:.3f} seconds")
+    print(f"\n在设备 {device} 上的训练时间: {total_time:.3f} 秒")
     return total_time
 
 
-# Plot loss curves of a model
+# 绘制模型的损失曲线
 def plot_loss_curves(results):
-    """Plots training curves of a results dictionary.
+    """
+    绘制结果字典的训练曲线。
 
-    Args:
-        results (dict): dictionary containing list of values, e.g.
+    参数：
+        results (dict): 包含值列表的字典，例如：
             {"train_loss": [...],
              "train_acc": [...],
              "test_loss": [...],
@@ -147,25 +163,25 @@ def plot_loss_curves(results):
 
     plt.figure(figsize=(15, 7))
 
-    # Plot loss
+    # 绘制损失
     plt.subplot(1, 2, 1)
-    plt.plot(epochs, loss, label="train_loss")
-    plt.plot(epochs, test_loss, label="test_loss")
-    plt.title("Loss")
-    plt.xlabel("Epochs")
+    plt.plot(epochs, loss, label="训练损失")
+    plt.plot(epochs, test_loss, label="测试损失")
+    plt.title("损失")
+    plt.xlabel("轮次")
     plt.legend()
 
-    # Plot accuracy
+    # 绘制准确率
     plt.subplot(1, 2, 2)
-    plt.plot(epochs, accuracy, label="train_accuracy")
-    plt.plot(epochs, test_accuracy, label="test_accuracy")
-    plt.title("Accuracy")
-    plt.xlabel("Epochs")
+    plt.plot(epochs, accuracy, label="训练准确率")
+    plt.plot(epochs, test_accuracy, label="测试准确率")
+    plt.title("准确率")
+    plt.xlabel("轮次")
     plt.legend()
 
 
-# Pred and plot image function from notebook 04
-# See creation: https://www.learnpytorch.io/04_pytorch_custom_datasets/#113-putting-custom-image-prediction-together-building-a-function
+# 来自notebook 04的预测和绘图图像功能
+# 参见创建过程: https://www.learnpytorch.io/04_pytorch_custom_datasets/#113-putting-custom-image-prediction-together-building-a-function
 from typing import List
 import torchvision
 
@@ -177,117 +193,121 @@ def pred_and_plot_image(
     transform=None,
     device: torch.device = "cuda" if torch.cuda.is_available() else "cpu",
 ):
-    """Makes a prediction on a target image with a trained model and plots the image.
+    """
+    使用训练好的模型对目标图像进行预测并绘制图像。
 
-    Args:
-        model (torch.nn.Module): trained PyTorch image classification model.
-        image_path (str): filepath to target image.
-        class_names (List[str], optional): different class names for target image. Defaults to None.
-        transform (_type_, optional): transform of target image. Defaults to None.
-        device (torch.device, optional): target device to compute on. Defaults to "cuda" if torch.cuda.is_available() else "cpu".
+    参数：
+        model (torch.nn.Module): 训练好的PyTorch图像分类模型
+        image_path (str): 目标图像的文件路径
+        class_names (List[str], optional): 目标图像的不同类别名称。默认为None
+        transform (_type_, optional): 目标图像的变换。默认为None
+        device (torch.device, optional): 用于计算的目标设备。
+                                       默认为"cuda"（如果torch.cuda.is_available()）否则为"cpu"
     
-    Returns:
-        Matplotlib plot of target image and model prediction as title.
+    返回：
+        目标图像的Matplotlib图和以模型预测为标题的图像。
 
-    Example usage:
+    使用示例：
         pred_and_plot_image(model=model,
                             image="some_image.jpeg",
-                            class_names=["class_1", "class_2", "class_3"],
+                            class_names=["类别_1", "类别_2", "类别_3"],
                             transform=torchvision.transforms.ToTensor(),
                             device=device)
     """
 
-    # 1. Load in image and convert the tensor values to float32
+    # 1. 加载图像并将张量值转换为float32
     target_image = torchvision.io.read_image(str(image_path)).type(torch.float32)
 
-    # 2. Divide the image pixel values by 255 to get them between [0, 1]
+    # 2. 将图像像素值除以255以使其在[0, 1]之间
     target_image = target_image / 255.0
 
-    # 3. Transform if necessary
+    # 3. 如有必要进行变换
     if transform:
         target_image = transform(target_image)
 
-    # 4. Make sure the model is on the target device
+    # 4. 确保模型在目标设备上
     model.to(device)
 
-    # 5. Turn on model evaluation mode and inference mode
+    # 5. 启用模型评估模式和推理模式
     model.eval()
     with torch.inference_mode():
-        # Add an extra dimension to the image
+        # 为图像添加额外的维度
         target_image = target_image.unsqueeze(dim=0)
 
-        # Make a prediction on image with an extra dimension and send it to the target device
+        # 对带有额外维度的图像进行预测并将其发送到目标设备
         target_image_pred = model(target_image.to(device))
 
-    # 6. Convert logits -> prediction probabilities (using torch.softmax() for multi-class classification)
+    # 6. 将logits转换为预测概率（对于多类别分类使用torch.softmax()）
     target_image_pred_probs = torch.softmax(target_image_pred, dim=1)
 
-    # 7. Convert prediction probabilities -> prediction labels
+    # 7. 将预测概率转换为预测标签
     target_image_pred_label = torch.argmax(target_image_pred_probs, dim=1)
 
-    # 8. Plot the image alongside the prediction and prediction probability
+    # 8. 绘制图像以及预测结果和预测概率
     plt.imshow(
         target_image.squeeze().permute(1, 2, 0)
-    )  # make sure it's the right size for matplotlib
+    )  # 确保尺寸适合matplotlib
     if class_names:
-        title = f"Pred: {class_names[target_image_pred_label.cpu()]} | Prob: {target_image_pred_probs.max().cpu():.3f}"
+        title = f"预测: {class_names[target_image_pred_label.cpu()]} | 概率: {target_image_pred_probs.max().cpu():.3f}"
     else:
-        title = f"Pred: {target_image_pred_label} | Prob: {target_image_pred_probs.max().cpu():.3f}"
+        title = f"预测: {target_image_pred_label} | 概率: {target_image_pred_probs.max().cpu():.3f}"
     plt.title(title)
     plt.axis(False)
 
 def set_seeds(seed: int=42):
-    """Sets random sets for torch operations.
-
-    Args:
-        seed (int, optional): Random seed to set. Defaults to 42.
     """
-    # Set the seed for general torch operations
+    为torch操作设置随机种子。
+
+    参数：
+        seed (int, optional): 要设置的随机种子。默认为42
+    """
+    # 为一般torch操作设置种子
     torch.manual_seed(seed)
-    # Set the seed for CUDA torch operations (ones that happen on the GPU)
+    # 为CUDA torch操作（在GPU上发生的操作）设置种子
     torch.cuda.manual_seed(seed)
 
 def download_data(source: str, 
                   destination: str,
                   remove_source: bool = True) -> Path:
-    """Downloads a zipped dataset from source and unzips to destination.
+    """
+    从源下载压缩数据集并解压到目标位置。
 
-    Args:
-        source (str): A link to a zipped file containing data.
-        destination (str): A target directory to unzip data to.
-        remove_source (bool): Whether to remove the source after downloading and extracting.
+    参数：
+        source (str): 包含数据的压缩文件链接
+        destination (str): 解压数据的目标目录
+        remove_source (bool): 是否在下载和提取后删除源文件
     
-    Returns:
-        pathlib.Path to downloaded data.
+    返回：
+        pathlib.Path: 下载数据的路径
     
-    Example usage:
+    使用示例：
         download_data(source="https://github.com/mrdbourke/pytorch-deep-learning/raw/main/data/pizza_steak_sushi.zip",
                       destination="pizza_steak_sushi")
     """
-    # Setup path to data folder
+    # 设置数据文件夹路径
     data_path = Path("data/")
     image_path = data_path / destination
 
-    # If the image folder doesn't exist, download it and prepare it... 
+    # 如果图像文件夹不存在，则下载并准备...
     if image_path.is_dir():
-        print(f"[INFO] {image_path} directory exists, skipping download.")
+        print(f"[信息] {image_path} 目录已存在，跳过下载。")
     else:
-        print(f"[INFO] Did not find {image_path} directory, creating one...")
+        print(f"[信息] 未找到 {image_path} 目录，正在创建...")
         image_path.mkdir(parents=True, exist_ok=True)
         
-        # Download pizza, steak, sushi data
+        # 下载数据
         target_file = Path(source).name
         with open(data_path / target_file, "wb") as f:
             request = requests.get(source)
-            print(f"[INFO] Downloading {target_file} from {source}...")
+            print(f"[信息] 正在从 {source} 下载 {target_file}...")
             f.write(request.content)
 
-        # Unzip pizza, steak, sushi data
+        # 解压数据
         with zipfile.ZipFile(data_path / target_file, "r") as zip_ref:
-            print(f"[INFO] Unzipping {target_file} data...") 
+            print(f"[信息] 正在解压 {target_file} 数据...") 
             zip_ref.extractall(image_path)
 
-        # Remove .zip file
+        # 删除.zip文件
         if remove_source:
             os.remove(data_path / target_file)
     

@@ -1,8 +1,14 @@
+"""
+语义分割筛选街景图像完整代码
+
+使用MIT ADE20K预训练模型对街景图像进行语义分割，
+筛选出包含建筑物facade的高质量图像。
+"""
+
 import shutil
 import time
 import os
 import csv
-# 导入必要的库
 import glob
 from pypushdeer import PushDeer
 import PIL.Image
@@ -16,6 +22,15 @@ from tqdm import tqdm
 
 
 def load_seg_model(seg_repo_dir):
+    """
+    加载语义分割模型。
+    
+    参数：
+        seg_repo_dir (str): 语义分割仓库目录路径
+        
+    返回：
+        tuple: (分割模块, 颜色映射, 类别名称映射)
+    """
     # 加载颜色映射表
     colors = scipy.io.loadmat(f'{seg_repo_dir}/data/color150.mat')['colors']
 
@@ -27,12 +42,13 @@ def load_seg_model(seg_repo_dir):
         for row in reader:
             names[int(row[0])] = row[5].split(";")[0]
 
-    # 加载模型和权重
+    # 加载编码器模型和权重
     net_encoder = ModelBuilder.build_encoder(
         arch='resnet50dilated',
         fc_dim=2048,
         weights=f'{seg_repo_dir}/ckpt/ade20k-resnet50dilated-ppm_deepsup/encoder_epoch_20.pth')
 
+    # 加载解码器模型和权重
     net_decoder = ModelBuilder.build_decoder(
         arch='ppm_deepsup',
         fc_dim=2048,
@@ -40,6 +56,7 @@ def load_seg_model(seg_repo_dir):
         weights=f'{seg_repo_dir}/ckpt/ade20k-resnet50dilated-ppm_deepsup/decoder_epoch_20.pth',
         use_softmax=True)
 
+    # 创建损失函数和分割模块
     crit = torch.nn.NLLLoss(ignore_index=-1)
     segmentation_module = SegmentationModule(net_encoder, net_decoder, crit)
     segmentation_module.eval()
@@ -47,16 +64,22 @@ def load_seg_model(seg_repo_dir):
     return segmentation_module, colors, names
 
 def safe_delete(file_path):
-    # 最多尝试几次
+    """
+    安全删除文件，支持重试机制。
+    
+    参数：
+        file_path (str): 要删除的文件路径
+    """
+    # 最多尝试5次
     for _ in range(5):
         try:
             os.remove(file_path)
             break
         except PermissionError:
-            print(f"Permission denied when deleting file {file_path}. Retrying...")
+            print(f"删除文件 {file_path} 时权限被拒绝。正在重试...")
             time.sleep(5)  # 稍等一会儿再重试
         except Exception as e:
-            print(f"Unable to delete file {file_path}: {e}")
+            print(f"无法删除文件 {file_path}: {e}")
             break
 # 定义数据集类
 class ImageDataset(Dataset):
@@ -141,22 +164,26 @@ def mkdir(path):
 
 
 if __name__ == '__main__':
+    """
+    主函数：执行语义分割筛选街景图像的完整流程。
+    """
     start_time = time.time()
 
+    # 语义分割模型仓库目录
     seg_repo_dir = "../semantic-segmentation-pytorch-master"
 
-    # GSV图像所在文件夹
+    # 街景图像根目录
     img_root_dir = r"/data/GSV"
 
-    # 创建不符合要求的文件夹
-    # 要创建的文件夹列表
+    # 创建不符合要求的图像分类文件夹
     folders = [
-        f"{img_root_dir}\\unqualified" # 不符合要求的图像
-        ]
-    # 建筑年代：分为9个文件夹
+        f"{img_root_dir}\\unqualified"  # 不符合要求的图像根目录
+    ]
+    
+    # 建筑年代分类：分为9个文件夹加1个未知年代
     facade_photos = [
         "pre-1652",
-        "1653–1705",
+        "1653–1705", 
         "1706–1764",
         "1765–1845",
         "1846–1910",
@@ -167,92 +194,99 @@ if __name__ == '__main__':
         "未知年代"
     ]
 
-    # 将facade_photos中的每个标签添加到输出文件夹中
-    folders.extend([os.path.join(img_root_dir, "unqualified", label) for label in
-                    facade_photos])  # extend 是列表的一个方法，它允许你添加另一个列表的所有元素到当前列表中。
+    # 将建筑年代标签添加到输出文件夹列表中
+    folders.extend([os.path.join(img_root_dir, "unqualified", label) for label in facade_photos])
 
-    # 创建所有文件夹
+    # 创建所有必要的文件夹
     for folder in folders:
         mkdir(folder)
 
-    # if not os.path.exists(new_path):
-    #     print(f"new_path文件不存在: {new_path}")
-    #     continue
-    # 加载模型
+    # 加载语义分割模型
+    print("正在加载语义分割模型...")
     segmentation_module, colors, names = load_seg_model(seg_repo_dir)
 
-    # 创建数据集
-    # 利用glob模块获取所有png文件的路径
+    # 创建图像数据集
+    # 获取所有PNG文件的路径
     file_paths = glob.glob(f"{img_root_dir}\\clip\\**\\*.png")
-    print("file_paths length:", len(file_paths))
+    print(f"找到图像文件数量: {len(file_paths)}")
 
     dataset = ImageDataset(file_paths)
-    print("dataset length:", len(dataset))
+    print(f"数据集大小: {len(dataset)}")
 
     # 创建数据加载器
     dataloader = DataLoader(dataset, batch_size=12, shuffle=False, num_workers=12)
 
-    # 设置开始的批次号
+    # 设置开始处理的批次号（用于断点续传）
     start_batch_num = 2200
 
-    # 初始化通知
-    pushdeer = PushDeer(pushkey="PDU22018TBKAygHi6CfrjI99HYdp6H2U4JVRVkOXQ")
+    # 初始化推送通知（可选）
+    try:
+        pushdeer = PushDeer(pushkey="PDU22018TBKAygHi6CfrjI99HYdp6H2U4JVRVkOXQ")
+    except Exception as e:
+        print(f"初始化通知服务失败: {e}")
+        pushdeer = None
 
-    # 用于跳过批次直到指定的批次号的标志
-    begin_processing = start_batch_num == 0
+    # 创建进度条
+    pbar = tqdm(total=len(dataloader) - start_batch_num, 
+               desc="处理图像批次", ncols=100)
 
-    # 用tqdm显示进度，设置总批次数减去要跳过的批次数
-    # 创建一个进度条考虑到总批次数
-    pbar = tqdm(total=len(dataloader) - start_batch_num, desc="Processing each dataloaders", ncols=100)
-
-    # 进行分割并可视化结果
+    # 开始语义分割和筛选过程
     with torch.inference_mode():
-        # 遍历数据加载器，返回图像数据和文件路径
         for current_batch_num, (img_data, file_paths_batch) in enumerate(dataloader, start=1):
-            # 如果当前批次号小于我们想要开始的批次号，则跳过
+            # 跳过指定批次之前的数据（用于断点续传）
             if current_batch_num < start_batch_num:
                 continue
 
-            # 对每批次的图像的合格率进行记录
+            # 记录当前批次的合格率
             qualified_rate = []
 
-            # 预测
-            # 将图像数据移动到GPU上
+            # 执行语义分割预测
             img_data = img_data.cuda()
             scores = segmentation_module({'img_data': img_data}, segSize=img_data.shape[2:])
             _, pred = torch.max(scores, dim=1)
             pred = pred.cpu().numpy()
 
-            # 遍历批次中的每张图像的预测结果
+            # 处理批次中的每张图像
             for idx, single_pred in enumerate(pred):
-                # 判断图片是否合格
+                # 判断图片是否合格（建筑物占比是否超过40%）
                 if judge_pred(single_pred, building_index=1):
                     qualified_rate.append(1)  # 合格
                 else:
-                    # 不合格的图片移动到指定文件夹
+                    # 将不合格的图片移动到指定文件夹
                     old_path = file_paths_batch[idx]
                     new_path = old_path.replace("clip", "unqualified")
-                    shutil.move(old_path, new_path)
-                    qualified_rate.append(0)  # 不合格
+                    try:
+                        shutil.move(old_path, new_path)
+                        qualified_rate.append(0)  # 不合格
+                    except Exception as e:
+                        print(f"移动文件失败 {old_path}: {e}")
 
             # 更新进度条
             pbar.update()
 
-            # 记录合格率
+            # 计算并打印当前批次合格率
             qualified_rate = np.array(qualified_rate)
-            print(f"此批次合格率：{qualified_rate.mean():.2%}")
+            print(f"批次 {current_batch_num} 合格率: {qualified_rate.mean():.2%}")
 
-            # 每隔200个批次通知
-            if current_batch_num % 200 == 0:
-                pushdeer.send_text(f"持续筛选街景图片中", desp=f"{current_batch_num}")
+            # 定期发送进度通知
+            if pushdeer and current_batch_num % 200 == 0:
+                try:
+                    pushdeer.send_text(f"持续筛选街景图片中", desp=f"已处理批次: {current_batch_num}")
+                except Exception as e:
+                    print(f"发送通知失败: {e}")
 
-    # 完成后关闭进度条
+    # 完成处理
     pbar.close()
 
-    # 计算并输出执行时间
+    # 计算并输出总执行时间
     end_time = time.time()
     minutes, seconds = divmod(end_time - start_time, 60)
-    print(f"Execution time: {minutes} minutes {seconds:.2f} seconds")
+    print(f"执行时间: {int(minutes)} 分钟 {seconds:.2f} 秒")
 
-    pushdeer.send_text(f"！街景图片筛选完成", desp=f"Execution time: {minutes} minutes {seconds:.2f} seconds")
-#%%
+    # 发送完成通知
+    if pushdeer:
+        try:
+            pushdeer.send_text(f"街景图片筛选完成!", 
+                             desp=f"执行时间: {int(minutes)} 分钟 {seconds:.2f} 秒")
+        except Exception as e:
+            print(f"发送完成通知失败: {e}")

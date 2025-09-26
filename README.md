@@ -1,7 +1,35 @@
 # 论文复现——《通过深度学习来识别建筑年代和风格》
-❗建议在[建筑年代与风格识别 \| Renhai实验室](https://www.renhai.online/projects/building-recognition)阅读合集，其他渠道不会始终更新。
 
-以下是旧文档内容：
+❗**建议在 [建筑年代与风格识别 | Renhai实验室](https://www.renhai.online/projects/building-recognition) 阅读完整教程，其他渠道不会始终更新。**
+
+## 📚 项目简介
+
+本项目复现了论文《Understanding architecture age and style through deep learning》的核心方法，通过深度学习技术实现对建筑年代和风格的自动识别。项目包含完整的数据处理、模型训练和结果分析流程。
+
+### 🎯 主要功能
+- **建筑年代分类**：基于街景图像识别建筑物的建造年代（9个时间段）
+- **建筑风格识别**：分析和分类不同的建筑风格特征
+- **语义分割筛选**：使用MIT ADE20K模型筛选高质量的建筑立面图像
+- **空间分析**：建筑年代和风格的空间分布分析和可视化
+
+### 🛠️ 技术栈
+- **深度学习框架**：PyTorch 2.0+
+- **核心模型**：DenseNet121（预训练+微调）
+- **语义分割**：MIT ADE20K 预训练模型
+- **数据处理**：GeoPandas、Pandas、PIL
+- **网络爬取**：Selenium、Streetview API
+- **可视化**：Matplotlib、TensorBoard
+
+### 📊 数据集
+- **建筑足迹数据**：荷兰BAG数据库
+- **街景图像**：Google Street View API
+- **建筑风格数据**：剑桥大学建筑风格数据集
+
+---
+
+### 📖 教程文章
+
+以下文章详细介绍了项目的实现过程：
 
 1. 建议先阅读[论文解读：如何利用最近很火的深度学习来识别建筑年代和风格？🔗](https://www.renhai.online/archives/understanding-architecture-age-and-style-through-deep-learning-part1)以了解论文的大致内容和技术方法
 2. 所有文章均可在[我的博客](https://www.renhai.online)和[微信公众号（renhai-lab）](https://image-1315363329.cos.ap-shanghai.myqcloud.com/lessons/qrcode_for_gh_c0d228771707_258.jpg)中找到，欢迎关注！
@@ -23,15 +51,162 @@
 
 ## 二、使用说明
 
-**fork 本仓库(点击下图)，然后克隆到本地或者用云端编辑器打开，最后安装环境。**
+### 🚀 快速开始
+
+**第1步：** Fork 本仓库(点击下图)，然后克隆到本地或者用云端编辑器打开
 
 [![Readme Card](https://gitstatus.renhai.online/api/pin/?username=renhai-lab&repo=Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning)](https://github.com/renhai-lab/Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning)
 
+**第2步：** 安装环境依赖
+
+```bash
+# 克隆仓库
+git clone https://github.com/renhai-lab/Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning.git
+cd Paper_Replication--Understanding-architecture-age-and-style-through-deep-learning
+
+# 创建虚拟环境（推荐）
+conda create -n building-recognition python=3.8
+conda activate building-recognition
+
+# 安装PyTorch（根据你的CUDA版本选择）
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+
+# 安装其他依赖
+pip install -r requirements.txt
+```
+
+### 📋 完整运行流程
+
+#### 步骤1：数据获取和预处理
+```bash
+cd 2-获取数据集/script
+# 运行建筑足迹数据预处理
+python 2.1-使用geopandas寻找街景点.py
+# 获取街景URL
+python 2.2-通过streetview获取含有url的csv文件.py
+```
+
+#### 步骤2：街景图像获取和筛选
+```bash
+cd 3-selenium获取街景并进一步筛选街景图像/script
+# 获取街景图像（需要Chrome浏览器）
+python 3.1-selenium多线程获取街景.py
+# 使用语义分割筛选高质量图像
+python 3.2-语义分割筛选街景完整代码.py
+```
+
+#### 步骤3：模型训练
+```bash
+cd 4.1-对建筑年代进行深度学习训练和预测/script
+# 训练建筑年代分类模型
+python train.py
+```
+
+#### 步骤4：结果分析
+使用对应的Jupyter notebook进行结果可视化和分析：
+- `4.1.3-建筑年代模型评价.ipynb`
+- `4.1.4-制作建筑年代预测结果的空间分布图.ipynb`
+
+### 💡 使用提示
+
+1. **GPU推荐**：建议使用GPU进行模型训练，可显著加速训练过程
+2. **内存要求**：语义分割和模型训练需要较大内存，建议16GB+
+3. **数据下载**：完整数据集较大，可以从提供的网盘链接下载
+4. **断点续传**：训练脚本支持断点续传功能，可从指定epoch继续训练
+
 ## 三、环境配置说明
 
-1. 直接安装 Python、或者使用 Anaconda、Pycharm、VScode 安装。
-2. pytorch 推荐单独安装，详见[PyTorch 环境配置](https://www.renhai.online/archives/DL-01-pytorch#2.PyTorch%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE)。
-3. 其余依赖使用`pip install requirements.txt`。
+### 📦 系统要求
+
+| 组件 | 推荐配置 | 最低配置 |
+|------|----------|----------|
+| **操作系统** | Windows 10/11, Ubuntu 18.04+ | Windows 7, Ubuntu 16.04+ |
+| **Python** | 3.8+ | 3.7+ |
+| **内存** | 16GB+ | 8GB |
+| **GPU** | NVIDIA RTX 3060+ | NVIDIA GTX 1060+ |
+| **存储空间** | 50GB+ | 20GB |
+
+### ⚙️ 详细安装步骤
+
+#### 1. Python环境安装
+推荐使用 Anaconda 或 Miniconda：
+```bash
+# 下载并安装Miniconda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+```
+
+#### 2. PyTorch安装
+**重要**：PyTorch 推荐单独安装，详见[PyTorch 环境配置](https://www.renhai.online/archives/DL-01-pytorch#2.PyTorch%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE)
+
+```bash
+# GPU版本（推荐，需要CUDA 11.8+）
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+
+# CPU版本（仅用于测试）
+conda install pytorch torchvision torchaudio cpuonly -c pytorch
+```
+
+#### 3. 其他依赖安装
+```bash
+pip install -r requirements.txt
+```
+
+### 🔧 主要依赖包说明
+
+| 包名 | 版本 | 用途 |
+|------|------|------|
+| `torch` | ~2.0.1 | 深度学习框架 |
+| `torchvision` | ~0.15.2 | 图像处理和预训练模型 |
+| `geopandas` | ~0.12.0 | 地理空间数据处理 |
+| `selenium` | ~4.14.0 | 网页自动化和图像爬取 |
+| `streetview` | ~0.0.6 | Google街景API |
+| `tqdm` | 最新版 | 进度条显示 |
+| `tensorboard` | ~2.15.0 | 训练可视化 |
+
+### 🚨 常见问题解决
+
+#### CUDA相关问题
+```bash
+# 检查CUDA版本
+nvcc --version
+nvidia-smi
+
+# 如果CUDA版本不匹配，重新安装对应版本的PyTorch
+pip uninstall torch torchvision torchaudio
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+#### 内存不足问题
+```python
+# 在训练脚本中调整以下参数
+BATCH_SIZE = 32  # 减小批次大小
+num_workers = 4  # 减少工作进程数
+```
+
+#### 依赖冲突问题
+```bash
+# 创建独立的虚拟环境
+conda create -n building-recognition python=3.8
+conda activate building-recognition
+# 然后重新安装依赖
+```
+
+### 🔍 验证安装
+
+运行以下代码验证环境是否配置正确：
+```python
+import torch
+import torchvision
+import geopandas
+import selenium
+
+print(f"PyTorch版本: {torch.__version__}")
+print(f"CUDA可用: {torch.cuda.is_available()}")
+print(f"GPU数量: {torch.cuda.device_count()}")
+if torch.cuda.is_available():
+    print(f"GPU名称: {torch.cuda.get_device_name(0)}")
+```
 
 ## 四、部分成果
 
